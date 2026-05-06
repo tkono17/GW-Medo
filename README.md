@@ -1,1 +1,2 @@
-# GW-Medo: Application for managing meetings and documents
+# GW-Medo
+This is an application for managing meetings and documents.
