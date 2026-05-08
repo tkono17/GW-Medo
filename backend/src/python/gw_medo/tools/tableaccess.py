@@ -31,14 +31,28 @@ class TableAccess:
             v = session.exec(statement).all()
         return v
     
-    def getall(self, offset: int = 0, limit: int = 100):
+    def getall(self, selectModifier=None, offset: int = 0, limit: int = 100):
         statement = select(self.TDb).offset(offset).limit(limit)
+        #log.info(f'statement (before modify): {statement}')
+        if selectModifier is not None:
+            statement = selectModifier(statement)
+            #log.info(f'statement (after modify): {statement}')
         v = []
         with Session(getEngine()) as session:
             results = session.exec(statement)
             v = results.all()
         return v
-
+    
+    def getone(self, selectModifier=None):
+        statement = select(self.TDb).offset(offset).limit(limit)
+        if selectModifier is not None:
+            statement = selectModifier(statement)
+        x = None
+        with Session(getEngine()) as session:
+            results = session.exec(statement)
+            x = results.one()
+        return x
+    
     def get(self, id: int):
         data = None
         with Session(getEngine()) as session:

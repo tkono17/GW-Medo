@@ -36,8 +36,9 @@ class EventTypeUpdate(EventTypeBase):
 #----------------------------------------------
 class EventBase(SQLModel):
     name: str = Field(index=True)
-    startDatetime: str|None = Field(index=True, default=None)
-    endDatetime: str|None = Field(index=True, default=None)
+    date: str|None = Field(index=True, default=None)
+    startTime: str|None = Field(index=True, default=None)
+    endTime: str|None = Field(index=True, default=None)
     place: str|None = Field(index=True, default=None)
     category_id: Optional[int] = Field(index=True, default=None, foreign_key="category.id")
     eventType_id: Optional[int] = Field(index=True, default=None, foreign_key="eventtype.id")
@@ -65,8 +66,9 @@ class EventCreate(EventBase):
 
 class EventUpdate(EventBase):
     name: Optional[str] = None
-    startDatetime: Optional[str] = None
-    endDatetime: Optional[str] = None
+    date: Optional[str] = None
+    startTime: Optional[str] = None
+    endTime: Optional[str] = None
     place: Optional[str] = None
     category_id: Optional[int] = None
     eventType_id: Optional[int] = None

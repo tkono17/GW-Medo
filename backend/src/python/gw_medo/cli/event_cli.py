@@ -14,8 +14,12 @@ def create(name: str):
     return app.addEvent(name)
 
 @event_app .command('find')
-def find(name: str):
-    return app.findEvents(name)
+def find(category_id: int,
+         name: str|None = None,
+         date: str|None = None, 
+         startTime: str|None = None,
+         endTime: str|None = None):
+    return app.findEvents(category_id=category_id, name=name, startTime=startTime, endTime=endTime)
 
 @event_app .command('delete')
 def delete(name: str):

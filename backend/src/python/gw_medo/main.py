@@ -1,5 +1,11 @@
 from fastapi import FastAPI, Depends
-from .routers import category_api, member_api, event_api, topic_api, file_api
+from .routers import (
+    category_api, 
+    member_api, 
+    event_api, 
+    topic_api, 
+    file_api
+)
 from .tools.common import get_query_token
 
 app = FastAPI()

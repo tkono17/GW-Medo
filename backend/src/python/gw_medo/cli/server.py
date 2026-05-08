@@ -22,7 +22,7 @@ def startServer(host: str = 'localhost',
                 log_level: str = 'INFO'):
     logging.basicConfig(level=stringToLogLevel(log_level))
     
-    config = uvicorn.Config('gw_medoc.cli.server:webapp',
+    config = uvicorn.Config('gw_medo.cli.server:webapp',
                             host=host, port=port,
                             log_level='info')
     server = uvicorn.Server(config)

@@ -3,16 +3,17 @@ import re
 import datetime
 import re
 from zoneinfo import ZoneInfo
-from sqlmodel import select, Session
+from sqlmodel import select
 
-
-from ..model import Category, CategoryCreate, CategoryUpdate,\
-    Member, MemberCreate, MemberUpdate,\
-    Event, EventCreate, EventUpdate,\
-    EventType, EventTypeCreate, EventTypeUpdate,\
-    Topic, TopicCreate, TopicUpdate,\
-    File, FileCreate, FileUpdate,\
+from ..model import (
+    Category, CategoryCreate, CategoryUpdate,
+    Member, MemberCreate, MemberUpdate,
+    Event, EventCreate, EventUpdate,
+    EventType, EventTypeCreate, EventTypeUpdate,
+    Topic, TopicCreate, TopicUpdate,
+    File, FileCreate, FileUpdate,
     TopicMemberLink, TopicFileLink
+)
 from ..tools import TableAccess, getEngine, connectDb
 
 log = logging.getLogger(__name__)
@@ -100,12 +101,24 @@ class App:
             log.warning(f'  Cannot create entry in table {tablename}, table not found')
         return data
 
-    def getall(self, tablename: str, offset: int=0, limit: int=100):
+    def getall(self, tablename: str, selectModifier=None, offset: int=0, limit: int=100):
+        table = self.getTable(tablename)
+        data = None
+        log.info(f'call getall: {table}')
+        if table is not None:
+            engine = getEngine()
+            log.info(f'call getall: {tablename}')
+            data = table.getall(selectModifier, offset, limit)
+        else:
+            log.warning(f'  Cannot get entries in table {tablename}, table not found')
+        return data
+
+    def getone(self, tablename: str, selectModifier=None, offset: int=0, limit: int=100):
         table = self.getTable(tablename)
         data = None
         if table is not None:
             engine = getEngine()
-            data = table.getall()
+            data = table.getone(selectModifier, offset, limit)
         else:
             log.warning(f'  Cannot get entries in table {tablename}, table not found')
         return data
@@ -201,7 +214,7 @@ class App:
         if len(ms)>0:
             member = ms[0]
         else:
-            member = table.create(MemberCreate(name=name))
+            member = table.create(MemberCreate(name=name, position=position, active=active))
         if member is not None:
             linktable.create(TopicMemberLink(topic_id=topic_id, member_id=member.id))
         return member
@@ -240,42 +253,34 @@ class App:
         v = table.exec(statement)
         return v
     
-    def findEvents(self, category_id: int, name: str|None = None,
-                   startDate: str|None = None, endDate: str|None = None):
-        v = []
-        table = self.getTable('event')
-        if table is None:
-            log.warning(f'  Cannot find events with name "{name}", table not found')
-            return v
-        statement = select(Event).offset(0).limit(100)
-        statement = statement.where(Event.category_id == category_id)
-        if name is not None:
-            statement = statement.where(Event.name.contains(name))
-        if startDate is not None:
-            mg = re.match(r'([\d]{4}-[\d]{2}-[\d]{2})', startDate)
-            if mg is not None:
-                ds = datetime.date.fromisoformat(mg.group(0))
-                statement = statement.where(Event.startDatetime.substr(0,10) >= ds)
-        if endDate is not None:
-            mg = re.match(r'([\d]{4}-[\d]{2}-[\d]{2})', endDate)
-            if mg is not None:
-                ds = datetime.date.fromisoformat(mg.group(0))
-                statement = statement.where(Event.endDatetime.substr(0,10) <= ds)
-        v = table.exec(statement)
-        return v
+    def findEvents(self, category_id: int, 
+                   name: str|None = None,
+                   startTime: str|None = None, 
+                   endTime: str|None = None):
+        def selectFilter(statement):
+            statement = statement.where(Event.category_id == category_id)
+            if name is not None:
+                statement = statement.where(Event.name.contains(name))
+            if startTime is not None:
+                mg = re.match(r'([\d]{4}-[\d]{2}-[\d]{2})', startTime)
+                if mg is not None:
+                    ds = datetime.date.fromisoformat(mg.group(0))
+                    statement = statement.where(Event.date >= ds)
+            if endTime is not None:
+                mg = re.match(r'([\d]{4}-[\d]{2}-[\d]{2})', endTime)
+                if mg is not None:
+                    ds = datetime.date.fromisoformat(mg.group(0))
+                    statement = statement.where(Event.date <= ds)
+            return statement
+        return self.getall('event', selectFilter)
     
     def findTopics(self, event_id: int):
-        v = []
-        table = self.getTable('topic')
-        if table is None:
-            log.warning(f'  Cannot find topics in event"{event_id}", table not found')
-            return v
-        statement = select(Event).offset(0).limit(100)
-        statement = statement.where(Topic.event_id == event_id)
-        v = table.exec(statement)
-        return v
-    
-    def findFiles(self, topic_id: int):
+        def selectFilter(statement):
+            statement = statement.where(Topic.event_id == event_id)
+            return statement 
+        return self.getall('topic', selectFilter)
+
+    def findTopicFiles(self, topic_id: int):
         v = []
         table = self.getTable('file')
         linktable = self.getTable('topicfilelink')

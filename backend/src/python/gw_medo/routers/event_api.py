@@ -1,9 +1,12 @@
 from fastapi import APIRouter, Depends, FastAPI
 
 from ..tools.common import SessionDep, get_token_header
-from ..model import Event, EventPublic, EventCreate, EventUpdate,\
-      EventType, EventTypePublic, EventTypeCreate, EventTypeUpdate,\
-      EventTopicLink
+from ..tools import TableAccess
+from ..model import (
+    Event, EventPublic, EventCreate, EventUpdate,
+    EventType, EventTypePublic, EventTypeCreate, EventTypeUpdate,
+    EventTopicLink
+)
 
 router = APIRouter(tags=['Event'], dependencies=[Depends(get_token_header)],
                    responses={404: {"description": "Not found"}})
@@ -13,23 +16,28 @@ router = APIRouter(tags=['Event'], dependencies=[Depends(get_token_header)],
 #----------------------------------------------
 @router.post('/eventType/create')
 async def create_eventType(data: EventTypeCreate, session: SessionDep)  -> EventTypePublic:
+    table = TableAccess('eventtype')
     return create_db(data, EventType, session)
 
 @router.get('/eventType/')
 async def get_eventTypes(session: SessionDep, offset: int = 0, limit: int = 100) -> list[EventTypePublic]:
-    return getall_db(EventType, offset, limit)
+    table = TableAccess('eventtype')
+    return table.get(offset, limit)
 
 @router.get('/eventType/{id}')
 async def get_eventType(id: int, session: SessionDep) -> EventTypePublic | None:
-    return get_db(id, EventType, session)
+    table = TableAccess('eventtype')
+    return table.get(id)
 
 @router.post('/eventType/update/{id}')
 async def update_eventType(id: int, data: EventTypeUpdate, session: SessionDep) -> EventTypePublic | None:
-    return update_db(id, data, EventType, session)
+    table = TableAccess('eventtype')
+    return table.update(id, data)
 
 @router.post('/eventType/delete/{id}')
 async def delete_eventType(id: int, session: SessionDep):
-    return delete_db(id, EventType, session)
+    table = TableAccess('eventtype')
+    return table.delete(id)
 
 #----------------------------------------------
 # Event-X Link
@@ -40,24 +48,25 @@ async def delete_eventType(id: int, session: SessionDep):
 #----------------------------------------------
 @router.post('/event/create')
 async def create_event(data: EventCreate, session: SessionDep)  -> EventPublic:
-    data_db = Event.model_validate(data)
-    session.add(data_db)
-    session.commit()
-    session.refresh(data_db)
-    return data_db
+    table = TableAccess('event')
+    return table.create(data)
 
 @router.get('/event/')
 async def get_events(session: SessionDep, offset: int = 0, limit: int = 100) -> list[EventPublic]:
-    return getall_db(Event, session, offset, limit)
+    table = TableAccess('event')
+    return table.getall(offset, limit)
 
 @router.get('/event/{id}')
 async def get_event(id: int, session: SessionDep) -> EventPublic | None:
-    return get_db(id, Event, session)
+    table = TableAccess('event')
+    return table.get(id)
 
 @router.post('/event/update/{id}')
 async def update_event(id: int, data: EventUpdate, session: SessionDep) -> EventPublic | None:
-    return update_db(id, data, Event, session)
+    table = TableAccess('event')
+    return table.update(id, data)
 
 @router.post('/event/delete/{id}')
 async def delete_event(id: int, session: SessionDep):
-    return delete_db(id, Event, session)
+    table = TableAccess('event')
+    return table.delete(id)

@@ -3,8 +3,8 @@ import logging
 import typer
 import sqlite3
 from sqlmodel import SQLModel
-from ..app import getApp
 
+from ..app import getApp
 from ..tools import connectDb, getEngine
 from .. import model
 
