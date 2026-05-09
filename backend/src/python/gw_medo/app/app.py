@@ -1,7 +1,9 @@
+import os
 import logging
 import re
 import datetime
 import re
+import dotenv
 from zoneinfo import ZoneInfo
 from sqlmodel import select, SQLModel
 
@@ -15,11 +17,13 @@ from ..model import (
     TopicMemberLink
 )
 from appbasics import DbAccess, getEngine, typedValue, keyValueToTuple
+from ..model import Settings
 
 log = logging.getLogger(__name__)
 
 class App:
     def __init__(self):
+        self.settings = Settings()
         self.dbAccess = DbAccess()
         self.init()
 
@@ -31,6 +35,16 @@ class App:
         self.dbAccess.addTable('topic', Topic, TopicCreate, TopicUpdate)
         self.dbAccess.addTable('file', File, FileCreate, FileUpdate)
         self.dbAccess.addTable('topicmemberlink', TopicMemberLink)
+
+    def configFromEnv(self, envFile='.env'):
+        dotenv.load_dotenv(envFile)
+        vars = os.environ.keys()
+        if 'GW_MEDO_DBTYPE' in vars:
+            self.settings.DBTYPE = os.getenv('GW_MEDO_DBTYPE')
+        if 'GW_MEDO_DBTYPE' in vars:
+            self.settings.DBTYPE = os.getenv('GW_MEDO_DBTYPE')
+        if 'GW_MEDO_FILESDIR' in vars:
+            self.settings.FILESDIR = os.getenv('GW_MEDO_FILESDIR')
 
     def initializeDb(self, dburl):
         self.connectDb(dburl)
@@ -60,25 +74,50 @@ class App:
         }
         return self.dbAccess.create('category', params)
     
-    def addEventSession(self, category_id: int, **keyValues):
+    def addEventSession(self, category_id: int, 
+                        name: str, 
+                        date: str, 
+                        startTime: str, 
+                        endTime: str, 
+                        place: str|None = None, 
+                        eventType_id: int|None = None):
         params = {
-            'category_id': category_id
+            'category_id': category_id,
+            'name': name,
+            'date': date,
+            'startTime': startTime,
+            'endTime': endTime
         }
-        params.update(keyValues)
+        if place is not None:
+            params.update({ 'place': place })
+        if eventType_id is not None:
+            params.update({ 'eventType_id': eventType_id })
         return self.dbAccess.create('eventsession', params)
     
-    def addTopic(self, eventsession_id: int, **keyValues):
+    def addTopic(self, eventsession_id: int, 
+                 name: str, 
+                 duration: str, 
+                 startTime: str, 
+                 endTime: str, 
+                 members: list[str]):
         params = {
-            'eventSession_id': eventsession_id
+            'eventSession_id': eventsession_id,
+            'name': name,
+            'duration': duration,
+            'startTime': startTime,
+            'endTime': endTime
         }
-        params.update(keyValues)
-        return self.dbAccess.create('topic', params)
+        topic = self.dbAccess.create('topic', params)
+        for member in members:
+            self.addTopicMember(topic.id, member)
+        return topic
     
-    def addFile(self, topic_id: int, *keyValues):
+    def addFile(self, topic_id: int, name: str, path: str):
         params = {
-            'topic_id': topic_id
+            'topic_id': topic_id,
+            'name': name,
+            'path': path
         }
-        params.update(keyValues)
         return self.dbAccess.create('file', params)
     
     def addTopicMember(self, topic_id: int, name: str):
@@ -96,14 +135,26 @@ class App:
             log.warning(f'  Cannot add member {member} to topic, the member does not exist. Add the member first')
     
     # Read
-    def findMembers(self, name: str|None = None, topic_id: int | None = None):
-        pass
+    def findMembers(self, name: str|None = None):
+        def selector(statement):
+            if name is not None:
+                statement = statement.where(Member.name == name)
+            return statement
+        return self.dbAccess.getall('member', selector)
         
-    def findEventTypes(self, categoryName: str|None = None):
-        pass
+    def findEventTypes(self, name: str|None = None):
+        def selector(statement):
+            if name is not None:
+                statement = statement.where(EventType.name == name)
+            return statement
+        return self.dbAccess.getall('eventtype', selector)
     
     def findCategories(self, categoryName: str|None = None):
-        pass
+        def selector(statement):
+            if categoryName is not None:
+                statement = statement.where(Category.name == categoryName)
+            return statement
+        return self.dbAccess.getall('category', selector)
     
     def findEvents(self, category_id: int, 
                    name: str|None = None,
@@ -133,16 +184,31 @@ class App:
         return self.getall('topic', selectFilter)
 
     def findTopicFiles(self, topic_id: int):
-        def selectByTopicId(statement):
-            statement = statement.where(TopicFileLink.topic_id == topic_id)
+        def selectById(statement):
+            statement = statement.where(Topic.id == topic_id)
             return statement
-        links = self.dbAccess.getall('topicfilelink', selectByTopicId)
+        files = self.dbAccess.getall('file', selectById)
         v = []
-        for link in links:
+        for f in files:
             def selectByFileId(statement):
-                statement = statement.where(File.id == link.file_id)
+                statement = statement.where(File.id == f.id)
                 return statement
             x = self.dbAccess.getone('file', selectByFileId)
+            if x is not None:
+                v.append(x)
+        return v
+    
+    def findTopicMembers(self, topic_id: int):
+        def selectByTopicId(statement):
+            statement = statement.where(TopicMemberLink.topic_id == topic_id)
+            return statement
+        links = self.dbAccess.getall('topicmemberlink', selectByTopicId)
+        v = []
+        for link in links:
+            def selectById(statement):
+                statement = statement.where(Member.id == link.member_id)
+                return statement
+            x = self.dbAccess.getone('file', selectById)
             if x is not None:
                 v.append(x)
         return v

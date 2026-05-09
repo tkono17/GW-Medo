@@ -6,3 +6,4 @@ from .event import (
 )
 from .topic import Topic, TopicPublic, TopicCreate, TopicUpdate, TopicMemberLink
 from .file import File, FilePublic, FileCreate, FileUpdate
+from .settings import Settings

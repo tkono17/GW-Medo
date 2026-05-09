@@ -55,13 +55,15 @@ class TableAccess:
         return v
     
     def getone(self, selectModifier=None):
-        statement = select(self.TDb).offset(offset).limit(limit)
+        statement = select(self.TDb)
         if selectModifier is not None:
             statement = selectModifier(statement)
         x = None
         with Session(getEngine()) as session:
             results = session.exec(statement)
-            x = results.one()
+            v = results.all()
+            log.info(f'  results: {v}')
+            x = v[0]
         return x
     
     def update(self, id: int, data: TUpdate):

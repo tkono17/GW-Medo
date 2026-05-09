@@ -31,11 +31,10 @@ def listCommands():
 def main():
     logging.basicConfig(level=logging.INFO, format='%(name)-20s %(levelname)6s %(message)s')
     log.info(f'GW-Medoc client application')
-    dotenv.load_dotenv('.env')
-    dbfile = os.getenv('GW_MEDO_DBFILE')
-    dburl = 'sqlite:///' + dbfile
-    log.info(f'  DB file: {dbfile} --> URL: {dburl}')
+    cliapp.configFromEnv()
 
+    dburl = cliapp.settings.DBURL
+    
     if dburl is not None:
         log.info(f'  Engine before connect: {getEngine()}')
         cliapp.connectDb(dburl)

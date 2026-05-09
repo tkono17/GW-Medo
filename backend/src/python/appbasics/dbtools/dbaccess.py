@@ -65,11 +65,11 @@ class DbAccess:
             log.warning(f'  Cannot get entries in table {tablename}, table not found')
         return data
 
-    def getone(self, tablename: str, selectModifier=None, offset: int=0, limit: int=100):
+    def getone(self, tablename: str, selectModifier=None):
         table = self.getTable(tablename)
         data = None
         if table is not None:
-            data = table.getone(selectModifier, offset, limit)
+            data = table.getone(selectModifier)
         else:
             log.warning(f'  Cannot get entries in table {tablename}, table not found')
         return data

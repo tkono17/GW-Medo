@@ -8,6 +8,9 @@ log = logging.getLogger(__name__)
 class CliApp:
     def __init__(self, app):
         self.app = app
+        self.settings = self.app.settings
+
+        self.configFromEnv = self.app.configFromEnv
         self.initializeDb = self.app.initializeDb
         self.connectDb = self.app.dbAccess.connectDb
         self.create = self.app.dbAccess.create
