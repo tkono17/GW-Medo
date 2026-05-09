@@ -1,35 +1,46 @@
 import logging
 from typing import Optional, TypeVar
 from sqlmodel import Session, select
-from ..routers import *
-from .common import getEngine
 
 log = logging.getLogger(__name__)
 
-ClsDb = TypeVar('Cls')
+Cls = TypeVar('Cls')
 TPublic = TypeVar('TPublic')
 TCreate = TypeVar('TCreate')
 TUpdate = TypeVar('TUpdate')
 
+dbEngine = None
+def setEngine(engine):
+    global dbEngine
+    dbEngine = engine
+
+def getEngine():
+    global dbEngine
+    return dbEngine
+
 class TableAccess:
-    def __init__(self, TDb: ClsDb):
+    def __init__(self, TDb: Cls, TCreate: Cls, TUpdate: Cls):
         self.TDb = TDb
+        self.TCreate = TCreate
+        self.TUpdate = TUpdate
 
     def create(self, data: TCreate):
         data_db = self.TDb.model_validate(data)
-        with Session(getEngine()) as session:
-            log.info(f'  create {data_db}')
+        e = getEngine()
+        log.info(f'  engine = {e}')
+        with Session(e) as session:
+            log.info(f'  create {type(data_db)} {data_db}')
             session.add(data_db)
             session.commit()
             session.refresh(data_db)
             log.info(f'  created {data_db}')
         return data_db
 
-    def exec(self, statement, offset: int=0, limit: int=100):
-        v = None
+    def get(self, id: int):
+        data = None
         with Session(getEngine()) as session:
-            v = session.exec(statement).all()
-        return v
+            data = session.get(self.TDb, id)
+        return data
     
     def getall(self, selectModifier=None, offset: int = 0, limit: int = 100):
         statement = select(self.TDb).offset(offset).limit(limit)
@@ -53,12 +64,6 @@ class TableAccess:
             x = results.one()
         return x
     
-    def get(self, id: int):
-        data = None
-        with Session(getEngine()) as session:
-            data = session.get(self.TDb, id)
-        return data
-    
     def update(self, id: int, data: TUpdate):
         data_db = self.get(id)
         if data_db is None:
@@ -81,4 +86,9 @@ class TableAccess:
             session.delete(data_db)
             session.commit()
         return 0
-    
+
+    def exec(self, statement, offset: int=0, limit: int=100):
+        v = None
+        with Session(getEngine()) as session:
+            v = session.exec(statement).all()
+        return v

@@ -9,7 +9,6 @@ class FileBase(SQLModel):
     path: str = Field(index=True)
     topic_id: Optional[int] = Field(default=None, foreign_key="topic.id")
 
-
 class File(FileBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
 

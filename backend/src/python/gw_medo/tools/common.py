@@ -5,33 +5,6 @@ from sqlmodel import Session, select, create_engine
 
 log = logging.getLogger(__name__)
 
-T = TypeVar('T')
-Cls = TypeVar('Cls')
-ClsDb = TypeVar('ClsDb')
-ClsPublic = TypeVar('ClsPublic')
-ClsCreate = TypeVar('ClsCreate')
-ClsUpdate = TypeVar('ClsUpdate')
-
-dbEngine = None
-def getEngine():
-    global dbEngine
-    return dbEngine
-
-def connectDb(db_file: str):
-    global dbEngine
-    db_url = 'sqlite:///' + db_file
-    log.info('Initialize database')
-    connect_args = {
-        'check_same_thread': False
-    }
-    dbEngine = create_engine(db_url)#, connect_args)
-
-def get_session():
-    with Session(dbEngine) as session:
-        yield session
-
-SessionDep = Annotated[Session, Depends(get_session)]
-
 
 # def create_db(data: ClsCreate, TDb: ClsDb, session: Session) -> ClsDb:
 #     data_db = TDb.model_validate(data)

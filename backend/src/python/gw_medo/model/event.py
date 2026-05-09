@@ -25,16 +25,9 @@ class EventTypeUpdate(EventTypeBase):
     id: Optional[int] = None
 
 #----------------------------------------------
-# Event-X Link
+# EventSession
 #----------------------------------------------
-#lass EventTopicLink(SQLModel, table=True):
-#   event_id: int = Field(foreign_key="event.id", primary_key=True)
-#   topic_id: int = Field(foreign_key="topic.id", primary_key=True)
-
-#----------------------------------------------
-# Event
-#----------------------------------------------
-class EventBase(SQLModel):
+class EventSessionBase(SQLModel):
     name: str = Field(index=True)
     date: str|None = Field(index=True, default=None)
     startTime: str|None = Field(index=True, default=None)
@@ -43,28 +36,16 @@ class EventBase(SQLModel):
     category_id: Optional[int] = Field(index=True, default=None, foreign_key="category.id")
     eventType_id: Optional[int] = Field(index=True, default=None, foreign_key="eventtype.id")
 
-class Event(EventBase, table=True):
+class EventSession(EventSessionBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
 
-    #category: Category = Relationship(back_populates="events")
-    #eventType: EventType = Relationship(back_populates="events")
-    #topics: list["Topic"] = Relationship(back_populates="event")
-
-class EventPublic(EventBase):
+class EventSessionPublic(EventSessionBase):
     id: int
 
-    #category: Category | None = None
-    #eventType: EventType | None = None
-    #opics: list["Topic"] | None = None
-
-#class EventPublic(EventBase):
-#   id: int
-#   eventType_id: int
-
-class EventCreate(EventBase):
+class EventSessionCreate(EventSessionBase):
     pass
 
-class EventUpdate(EventBase):
+class EventSessionUpdate(EventSessionBase):
     name: Optional[str] = None
     date: Optional[str] = None
     startTime: Optional[str] = None
