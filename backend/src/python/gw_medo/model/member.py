@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from sqlmodel import SQLModel, Field
 
 class MemberBase(SQLModel):
-    name: str = Field(index=True)
+    name: str = Field(index=True, unique=True)
     position: str = Field(index=True)
     active: bool = Field(index=True)
 

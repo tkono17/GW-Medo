@@ -28,3 +28,4 @@ packages = [ "src/python/appbasics", "src/python/gw_medo" ]
 gwmedo-manage = "gw_medo.cli.manage:main"
 gwmedo-server = "gw_medo.cli.server:main"
 gwmedo-cli = "gw_medo.cli.cli:main"
+gwmedo-bulk = "gw_medo.cli.bulk:main"

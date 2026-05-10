@@ -1,6 +1,6 @@
 from typing import Optional
 from dataclasses import dataclass, field
-from sqlmodel import SQLModel, Field, Relationship
+from sqlmodel import SQLModel, Field, UniqueConstraint
 from .member import Member
 
 #----------------------------------------------
@@ -21,6 +21,9 @@ class TopicBase(SQLModel):
     eventSession_id: int|None = Field(index=True, foreign_key='eventsession.id', default=None)
 
 class Topic(TopicBase, table=True):
+    __table_args = (
+        UniqueConstraint('name', 'eventSession_id', name='unique_idx_name_eventSession_id'),
+    )
     id: Optional[int] = Field(default=None, primary_key=True)
 
 class TopicPublic(TopicBase):

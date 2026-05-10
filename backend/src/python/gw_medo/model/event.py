@@ -1,6 +1,6 @@
 from typing import Optional
 from dataclasses import dataclass
-from sqlmodel import SQLModel, Field, Relationship
+from sqlmodel import SQLModel, Field, UniqueConstraint
 
 from .category import Category
 
@@ -8,7 +8,7 @@ from .category import Category
 # EventType
 #----------------------------------------------
 class EventTypeBase(SQLModel):
-    name: str = Field(index=True)
+    name: str = Field(index=True, unique=True)
 
 class EventType(EventTypeBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -37,6 +37,7 @@ class EventSessionBase(SQLModel):
     eventType_id: Optional[int] = Field(index=True, default=None, foreign_key="eventtype.id")
 
 class EventSession(EventSessionBase, table=True):
+    __table_args__ = (UniqueConstraint('name', 'date', name='unique_idx_name_date'),)
     id: Optional[int] = Field(default=None, primary_key=True)
 
 class EventSessionPublic(EventSessionBase):

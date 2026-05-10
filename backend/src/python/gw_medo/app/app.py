@@ -54,7 +54,12 @@ class App:
         self.dbAccess.connectDb(dburl)
 
     # Create
-    def addMember(self, name: str, position: str, active: bool = False):
+    def addMember(self, name: str, position: str, active: bool = True):
+        log.info(f'  addMember: {name}, {position}, {active}')
+        v = self.findMembers(name)
+        if len(v)>0:
+            log.warning(f'  Member {name} already exists')
+            return None
         params = {
             'name': name, 
             'position': position,
@@ -63,14 +68,22 @@ class App:
         return self.dbAccess.create('member', params)
     
     def addEventType(self, name: str):
+        v = self.findEventTypes(name)
+        if len(v)>0:
+            log.warning(f'  Event type {name} already exists')
+            return None
         params = {
             'name': name
         }
         return self.dbAccess.create('eventtype', params)
     
-    def addCategory(self, categoryName: str):
+    def addCategory(self, name: str):
+        v = self.findCategories(name)
+        if len(v)>0:
+            log.warning(f'  Category {name} already exists')
+            return None
         params = {
-            'name': categoryName
+            'name': name
         }
         return self.dbAccess.create('category', params)
     
@@ -81,6 +94,10 @@ class App:
                         endTime: str, 
                         place: str|None = None, 
                         eventType_id: int|None = None):
+        v = self.findEventSessions(name=name, startDate=date, endDate=date)
+        if len(v)>0:
+            log.warning(f'  Event session {name} on {date} already exists')
+            return None
         params = {
             'category_id': category_id,
             'name': name,
@@ -94,14 +111,18 @@ class App:
             params.update({ 'eventType_id': eventType_id })
         return self.dbAccess.create('eventsession', params)
     
-    def addTopic(self, eventsession_id: int, 
+    def addTopic(self, eventSession_id: int, 
                  name: str, 
                  duration: str, 
                  startTime: str, 
                  endTime: str, 
                  members: list[str]):
+        v = self.findTopics(eventSession_id=eventSession_id, name=name)
+        if len(v)>0:
+            log.warning(f'  Topic {name} in event session {eventSession_id} already exists')
+            return None
         params = {
-            'eventSession_id': eventsession_id,
+            'eventSession_id': eventSession_id,
             'name': name,
             'duration': duration,
             'startTime': startTime,
@@ -113,6 +134,10 @@ class App:
         return topic
     
     def addFile(self, topic_id: int, name: str, path: str):
+        v = self.findFiles(topic_id=topic_id, name=name)
+        if len(v)>0:
+            log.warning(f'  File {name} in topic {topic_id} already exists')
+            return None
         params = {
             'topic_id': topic_id,
             'name': name,
@@ -121,18 +146,27 @@ class App:
         return self.dbAccess.create('file', params)
     
     def addTopicMember(self, topic_id: int, name: str):
+        member = None
         def selectByName(statement):
-            statement.where(Member.name == name)
+            statement = statement.where(Member.name == name)
             return statement
         member = self.dbAccess.getone('member', selectByName)
         if member is not None:
+            def selectById(statement):
+                statement = statement.where(TopicMemberLink.member_id == member.id)
+                return statement
+            v = self.dbAccess.getall('topicmemberlink', selectById)
+            if v is not None or len(v)>0:
+                log.warning(f'  Member {name} in topic {topic_id} already exists')
+                return None
             params = {
                 'topic_id': topic_id,
                 'member_id': member.id
             }
-            self.dbAccess.create('topicmemberlink', params)
+            member = self.dbAccess.create('topicmemberlink', params)
         else:
             log.warning(f'  Cannot add member {member} to topic, the member does not exist. Add the member first')
+        return member
     
     # Read
     def findMembers(self, name: str|None = None):
@@ -156,46 +190,37 @@ class App:
             return statement
         return self.dbAccess.getall('category', selector)
     
-    def findEvents(self, category_id: int, 
+    def findEventSessions(self, category_id: int|None = None, 
                    name: str|None = None,
-                   startTime: str|None = None, 
-                   endTime: str|None = None):
+                   startDate: str|None = None, 
+                   endDate: str|None = None):
         def selectFilter(statement):
-            statement = statement.where(EventSession.category_id == category_id)
+            if category_id is not None:
+                statement = statement.where(EventSession.category_id == category_id)
             if name is not None:
                 statement = statement.where(EventSession.name.contains(name))
-            if startTime is not None:
-                mg = re.match(r'([\d]{4}-[\d]{2}-[\d]{2})', startTime)
-                if mg is not None:
-                    ds = datetime.date.fromisoformat(mg.group(0))
-                    statement = statement.where(EventSession.date >= ds)
-            if endTime is not None:
-                mg = re.match(r'([\d]{4}-[\d]{2}-[\d]{2})', endTime)
-                if mg is not None:
-                    ds = datetime.date.fromisoformat(mg.group(0))
-                    statement = statement.where(EventSession.date <= ds)
+            if startDate is not None:
+                statement = statement.where(EventSession.date >= startDate)
+            if endDate is not None:
+                statement = statement.where(EventSession.date <= endDate)
             return statement
-        return self.getall('event', selectFilter)
+        return self.dbAccess.getall('eventsession', selectFilter)
     
-    def findTopics(self, event_id: int):
+    def findTopics(self, eventSession_id: int, name: str|None = None):
         def selectFilter(statement):
-            statement = statement.where(Topic.event_id == event_id)
-            return statement 
-        return self.getall('topic', selectFilter)
-
-    def findTopicFiles(self, topic_id: int):
-        def selectById(statement):
-            statement = statement.where(Topic.id == topic_id)
+            statement = statement.where(Topic.eventSession_id == eventSession_id)
+            if name is not None:
+                statement = statement.where(Topic.name == name)
             return statement
-        files = self.dbAccess.getall('file', selectById)
-        v = []
-        for f in files:
-            def selectByFileId(statement):
-                statement = statement.where(File.id == f.id)
-                return statement
-            x = self.dbAccess.getone('file', selectByFileId)
-            if x is not None:
-                v.append(x)
+        return self.dbAccess.getall('topic', selectFilter)
+
+    def findTopicFiles(self, topic_id: int, name: str|None = None):
+        def selectById(statement):
+            statement = statement.where(File.topic_id == topic_id)
+            if name is not None:
+                statement = statement.where(File.name == name)
+            return statement
+        v = self.dbAccess.getall('file', selectById)
         return v
     
     def findTopicMembers(self, topic_id: int):

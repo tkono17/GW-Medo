@@ -1,13 +1,13 @@
 from typing import Optional
 from dataclasses import dataclass
-from sqlmodel import SQLModel, Field, Relationship
+from sqlmodel import SQLModel, Field
 
 
 #----------------------------------------------
 # Category
 #----------------------------------------------
 class CategoryBase(SQLModel):
-    name: str = Field(index=True)
+    name: str = Field(index=True, unique=True)
 
 class Category(CategoryBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
