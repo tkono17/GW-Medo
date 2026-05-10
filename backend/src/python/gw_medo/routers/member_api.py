@@ -1,36 +1,42 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, FastAPI
+import logging
 
-from ..tools.common import SessionDep, get_token_header
-from ..tools import TableAccess
+from ..app import getApp
 from ..model import (
-    Member, MemberPublic, MemberCreate, MemberUpdate
+    MemberPublic, MemberCreate, MemberUpdate
 )
 
-router = APIRouter(tags=['Member'])
+log = logging.getLogger(__name__)
 
-session = None
+router = APIRouter(tags=['Member'], 
+                   responses={404: {"description": "Not found"}})
 
 @router.post('/member/create')
-async def create_member(data: MemberCreate, session: SessionDep)  -> MemberPublic:
-    table = TableAccess(Member)
+async def create_member(data: MemberCreate)  -> MemberPublic:
+    app = getApp()
+    table = app.dbAccess.getTable('topic')
     return table.create(data)
 
 @router.get('/member/')
-async def get_members(session: SessionDep, offset: int = 0, limit: int = 100) -> list[MemberPublic]:
-    table = TableAccess(Member)
-    return table.getall(offset, limit)
+async def get_members(offset: int = 0, limit: int = 100) -> list[MemberPublic]:
+    app = getApp()
+    table = app.dbAccess.getTable('topic')
+    return table.getall(offset=offset, limit=limit)
 
 @router.get('/member/{id}')
-async def get_member(id: int, session: SessionDep) -> MemberPublic | None:
-    table = TableAccess(Member)
+async def get_member(id: int) -> MemberPublic | None:
+    app = getApp()
+    table = app.dbAccess.getTable('topic')
     return table.get(id)
 
 @router.post('/member/update/{id}')
-async def update_member(id: int, data: MemberUpdate, session: SessionDep) -> MemberPublic | None:
-    table = TableAccess(Member)
+async def update_member(id: int, data: MemberUpdate) -> MemberPublic | None:
+    app = getApp()
+    table = app.dbAccess.getTable('topic')
     return table.update(id, data)
 
 @router.post('/member/delete/{id}')
-async def delete_member(id: int, session: SessionDep):
-    table = TableAccess(Member)
+async def delete_member(id: int):
+    app = getApp()
+    table = app.dbAccess.getTable('topic')
     return table.delete(id)

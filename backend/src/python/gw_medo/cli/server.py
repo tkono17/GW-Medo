@@ -1,11 +1,10 @@
 import logging
 import typer
 import uvicorn
-from ..main import app as webapp1
+from ..main import app as webapp
 
 log = logging.getLogger(__name__)
 cliapp = typer.Typer()
-webapp = webapp1
 
 def stringToLogLevel(sloglevel: str):
     level = logging.INFO

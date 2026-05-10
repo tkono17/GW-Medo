@@ -1,36 +1,42 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
+import logging
 
-from ..tools.common import SessionDep, get_token_header
-from ..tools import TableAccess
+from ..app import getApp
 from ..model import (
-    File, FilePublic, FileCreate, FileUpdate
+    FilePublic, FileCreate, FileUpdate
 )
 
-router = APIRouter(tags=['File'])
+log = logging.getLogger(__name__)
 
-session = None
+router = APIRouter(tags=['File'], 
+                   responses={404: {"description": "Not found"}})
 
 @router.post('/file/create')
-async def create_file(data: FileCreate, session: SessionDep)  -> FilePublic:
-    table = TableAccess(File)
+async def create_file(data: FileCreate)  -> FilePublic:
+    app = getApp()
+    table = app.dbAccess.getTable('topic')
     return table.create(data)
 
 @router.get('/file/')
-async def get_files(session: SessionDep, offset: int = 0, limit: int = 100) -> list[FilePublic]:
-    table = TableAccess(File)
-    return table.getall(offset, limit)
+async def get_files(offset: int = 0, limit: int = 100) -> list[FilePublic]:
+    app = getApp()
+    table = app.dbAccess.getTable('topic')
+    return table.getall(offset=offset, limit=limit)
 
 @router.get('/file/{id}')
-async def get_file(id: int, session: SessionDep) -> FilePublic | None:
-    table = TableAccess(File)
+async def get_file(id: int) -> FilePublic | None:
+    app = getApp()
+    table = app.dbAccess.getTable('topic')
     return table.get(id)
 
 @router.post('/file/update/{id}')
-async def update_file(id: int, data: FileUpdate, session: SessionDep) -> FilePublic | None:
-    table = TableAccess(File)
+async def update_file(id: int, data: FileUpdate) -> FilePublic | None:
+    app = getApp()
+    table = app.dbAccess.getTable('topic')
     return table.update(id, data)
 
 @router.post('/file/delete/{id}')
-async def delete_file(id: int, session: SessionDep):
-    table = TableAccess(File)
+async def delete_file(id: int):
+    app = getApp()
+    table = app.dbAccess.getTable('topic')
     return table.delete(id)

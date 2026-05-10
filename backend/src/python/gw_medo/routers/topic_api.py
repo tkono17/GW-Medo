@@ -1,36 +1,42 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, FastAPI
+import logging
 
-from ..tools.common import SessionDep, get_token_header
-from ..tools import TableAccess
+from ..app import getApp
 from ..model import (
-    Topic, TopicPublic, TopicCreate, TopicUpdate
+    TopicPublic, TopicCreate, TopicUpdate
 )
 
-router = APIRouter(tags=['Topic'])
+log = logging.getLogger(__name__)
 
-session = None
+router = APIRouter(tags=['Topic'], 
+                   responses={404: {"description": "Not found"}})
 
 @router.post('/topic/create')
-async def create_topic(data: TopicCreate, session: SessionDep)  -> TopicPublic:
-    table = TableAccess(Topic)
+async def create_topic(data: TopicCreate)  -> TopicPublic:
+    app = getApp()
+    table = app.dbAccess.getTable('topic')
     return table.create(data)
 
 @router.get('/topic/')
-async def get_topics(session: SessionDep, offset: int = 0, limit: int = 100) -> list[TopicPublic]:
-    table = TableAccess(Topic)
-    return table.getall(offset, limit)
+async def get_topics(offset: int = 0, limit: int = 100) -> list[TopicPublic]:
+    app = getApp()
+    table = app.dbAccess.getTable('topic')
+    return table.getall(offset=offset, limit=limit)
 
 @router.get('/topic/{id}')
-async def get_topic(id: int, session: SessionDep) -> TopicPublic | None:
-    table = TableAccess(Topic)
+async def get_topic(id: int) -> TopicPublic | None:
+    app = getApp()
+    table = app.dbAccess.getTable('topic')
     return table.get(id)
 
 @router.post('/topic/update/{id}')
-async def update_topic(id: int, data: TopicUpdate, session: SessionDep) -> TopicPublic | None:
-    table = TableAccess(Topic)
+async def update_topic(id: int, data: TopicUpdate) -> TopicPublic | None:
+    app = getApp()
+    table = app.dbAccess.getTable('topic')
     return table.update(id, data)
 
 @router.post('/topic/delete/{id}')
-async def delete_topic(id: int, session: SessionDep):
-    table = TableAccess(Topic)
+async def delete_topic(id: int):
+    app = getApp()
+    table = app.dbAccess.getTable('topic')
     return table.delete(id)

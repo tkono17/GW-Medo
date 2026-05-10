@@ -1,20 +1,26 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
+from .app import getApp
 from .routers import (
-    category_api, 
+    category_api,
+    eventtype_api, 
+    eventsession_api, 
     member_api, 
-    event_api, 
     topic_api, 
     file_api
 )
-from .tools.common import get_query_token
 
 app = FastAPI()
 
 app.include_router(category_api.router)
 app.include_router(member_api.router)
-app.include_router(event_api.router)
+app.include_router(eventtype_api.router)
+app.include_router(eventsession_api.router)
 app.include_router(topic_api.router)
 app.include_router(file_api.router)
+
+gwmedo_app = getApp()
+gwmedo_app.configFromEnv()
+gwmedo_app.connectDb(gwmedo_app.settings.DBURL)
 
 @app.get("/")
 async def root():
