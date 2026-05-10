@@ -25,7 +25,6 @@ async def get_members(offset: int = 0, limit: int = 100) -> list[MemberPublic]:
 
 @router.get('/member/{id}')
 async def get_member(id: int) -> MemberPublic | None:
-    app = getApp()
     table = app.dbAccess.getTable('member')
     return table.get(id)
 
