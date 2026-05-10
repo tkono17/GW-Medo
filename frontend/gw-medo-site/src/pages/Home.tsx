@@ -11,14 +11,30 @@ import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
+import { useQuery } from '@tanstack/react-query'
 import './Home.css'
 
+const getCategories = async () => {
+    const response = await fetch('http://localhost:7611/category/?offset=0&limit=100')
+    return await response.json()
+}
+
 function Home() {
+    const {data, isPending } = useQuery({
+        queryKey: [ 'categories'],
+        queryFn: getCategories,
+        retry: 0
+    })
+            
     return (<div className="Home">
         <Container>
             <Typography variant="h2">カテゴリ・日付で検索</Typography>
         </Container>
         
+        <h2>hello</h2>
+        <div>
+            {isPending ? 'Pending ...' : JSON.stringify(data)}
+        </div>
         <Grid container sx={{
             justifyContent: "center",
             alignItems: "center",
@@ -28,23 +44,23 @@ function Home() {
             alignItems: "center",
             }}>
             <Grid size={5} sx={{ p: 5 }}>
-                <Typography variant="h2">Category</Typography>
+                <Typography variant="h4">Category</Typography>
                 <List className="CategoryList">
-                    <ListItem><Typography variant="h4">物理学科</Typography></ListItem>
-                    <ListItem><Typography variant="h4">河野研究室</Typography></ListItem>
+                    <ListItem><Typography variant="h5">物理学科</Typography></ListItem>
+                    <ListItem><Typography variant="h5">河野研究室</Typography></ListItem>
                 </List>
             </Grid>
             <Grid size={5}>
-                <Typography variant="h2">Date</Typography>
+                <Typography variant="h4">Date</Typography>
                 <Grid container>
                     <Grid size={6}>
-                        <Typography variant="h6">日付（検索開始）</Typography>
+                        <Typography variant="h5">日付（検索開始）</Typography>
                     </Grid>
                     <Grid size={6}>
                         <TextField defaultValue="2026-05-06"></TextField>
                     </Grid>
                     <Grid size={6}>
-                        <Typography variant="h6">日付（検索終了）</Typography>
+                        <Typography variant="h5">日付（検索終了）</Typography>
                     </Grid>
                     <Grid size={6}>
                         <TextField defaultValue="2026-05-06"></TextField>
