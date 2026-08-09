@@ -11,6 +11,7 @@ import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
+import { useState, ChangeEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
 import './Home.css'
@@ -24,13 +25,18 @@ const getCategories = async () => {
 
 function Home() {
     const {data: categoriesData, isPending } = useQuery({
-        queryKey: [ 'categories1'],
+        queryKey: [ 'categories'],
         queryFn: getCategories,
         retry: 0
     })
+    const [ category, setCategory] = useState('?')
+
+    const handleCategory = (event) => {
+        setCategory(event.target.value)
+    }
+
     var categories = []
     { isPending ? categories =[] : categories = categoriesData }
-    categories = []
     
     return (<div className="Home">
         <Container>
@@ -50,10 +56,10 @@ function Home() {
             alignItems: "center",
             }}>
             <Grid size={5} sx={{ p: 5 }}>
-                <CategorySelection categories={categories} />
+                <CategorySelection categories={categories} handleCategory={handleCategory} />
             </Grid>
             <Grid size={6}>
-                <DateSelection />
+                <DateSelection category={category} />
             </Grid>
         </Grid>
     </div>)

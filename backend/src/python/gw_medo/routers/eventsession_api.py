@@ -26,6 +26,16 @@ async def get_eventSession(offset: int = 0, limit: int = 100) -> list[EventSessi
     table = app.dbAccess.getTable('eventsession')
     return table.getall(offset=offset, limit=limit)
 
+@router.get('/category/{category_id}/eventSession')
+async def get_eventSession_in_category(start_date: str, end_date: str, 
+                                       offset: int = 0, limit: int = 100) -> list[EventSessionPublic]:
+    app = getApp()
+    v = app.findEventSessions(category_id=category_id, 
+                                startDate=start_date,
+                                endDate=end_date,
+                                offset=offset, limit=limit)
+    return v
+
 @router.get('/eventSession/{id}')
 async def get_eventSession(id: int) -> EventSessionPublic | None:
     app = getApp()

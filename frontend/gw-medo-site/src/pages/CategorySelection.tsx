@@ -11,11 +11,9 @@ import Radio from '@mui/material/Radio'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
 
-const handleChange = () => {}
-
-function CategorySelection({categories}) {
+function CategorySelection({categories, handleCategory}) {
     const id = React.useId()
-    
+
     return (
         <Container>
             <Typography variant="h4">カテゴリ</Typography>
@@ -24,7 +22,7 @@ function CategorySelection({categories}) {
                 <RadioGroup
                     aria-labelledby={`${id}-label`}
                     name="controlled-radio-buttons-group"
-                    onChange={handleChange}>
+                    onChange={handleCategory}>
                     {categories.map( (category) => (
                         <FormControlLabel value={category['name']} control={<Radio />} label={category['name']} />
                     ))}
